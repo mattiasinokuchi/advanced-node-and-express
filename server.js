@@ -6,12 +6,6 @@ require('dotenv').config();
 // Import web app framework
 const express = require('express');
 
-// Import and mount server module
-const http = require('http').createServer(app);
-
-// Import and mount realtime framework
-const io = require('socket.io')(http);
-
 // Import module for database connection
 const myDB = require('./connection');
 
@@ -32,6 +26,12 @@ const auth = require('./auth.js')
 
 // Create an Express application
 const app = express();
+
+// Import and mount server module
+const http = require('http').createServer(app);
+
+// Import and mount realtime framework
+const io = require('socket.io')(http);
 
 // Set template engine
 app.set('view engine', 'pug');
@@ -74,6 +74,6 @@ myDB(async (client) => {
   });
 });
 
-app.listen(process.env.PORT || 3000, () => {
+http.listen(process.env.PORT || 3000, () => {
   console.log('Listening on port ' + process.env.PORT);
 });
