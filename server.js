@@ -67,14 +67,22 @@ myDB(async (client) => {
   auth(app, myDataBase);
   // Define variable to keep track of the users
   let currentUsers = 0;
-  // Add lister for connections
+  // Add listener for connections
   io.on('connection', socket => {
-    console.log('A user has connected');
     // Increment users
     ++currentUsers;
     // Emit the event
     io.emit('user count', currentUsers);
-  });  
+    console.log('A user has connected');
+    // Add listener for disconnections
+    socket.on('disconnect', () => {
+      // Decrement users
+      --currentUsers;
+      // Emit the event
+      io.emit('user count', currentUsers);
+      console.log('A user has disconnected');
+    });
+  });
 }).catch((e) => {
   app.route('/').get((req, res) => {
     res.render('pug', { title: e, message: 'Unable to login' });
