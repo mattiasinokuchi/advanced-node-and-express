@@ -3,9 +3,13 @@ $(document).ready(function () {
   /*global io*/
   let socket = io();
 
-  // Add listener for user count
-  socket.on('user count', function(data) {
-    console.log(data);
+  // Add listener for user
+  socket.on('user', data => {
+    $('#num-users').text(data.currentUsers + ' users online');
+    let message =
+    data.name +
+    (data.connected ? ' has joined the chat.' : ' has left the chat.');
+    $('#messages').append($('<li>').html('<b>' + message + '</b>'));
   });
 
   // Form submittion with new message in field with id 'm'

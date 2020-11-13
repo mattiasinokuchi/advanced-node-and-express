@@ -93,14 +93,22 @@ myDB(async (client) => {
     // Increment users
     ++currentUsers;
     // Emit the event
-    io.emit('user count', currentUsers);
+    io.emit('user', {
+      name: socket.request.user.name,
+      currentUsers,
+      connected: true
+    });
     console.log('user ' + socket.request.user.name + ' connected');
     // Add listener for disconnections
     socket.on('disconnect', () => {
       // Decrement users
       --currentUsers;
       // Emit the event
-      io.emit('user count', currentUsers);
+      io.emit('user', {
+        name: socket.request.user.name,
+        currentUsers,
+        connected: false
+      });
       console.log('A user has disconnected');
     });
   });
