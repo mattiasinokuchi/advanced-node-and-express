@@ -18,6 +18,13 @@ const session = require('express-session');
 // Import authentication middleware
 const passport = require('passport');
 
+// Import and mount modules to obtain the user object from the cookie
+const passportSocketIo = require('passport.socketio');
+const cookieParser = require('cookie-parser');
+const MongoStore = require('connect-mongo')(session);
+const URI = process.env.MONGO_URI;
+const store = new MongoStore({ url: URI });
+
 // Import module for handle requests
 const routes = require('./routes.js')
 
@@ -50,15 +57,29 @@ app.use(express.urlencoded({ extended: true }));
 
 // Enable middleware for session (to keeps users logged in)
 app.use(session({
+  key: 'express.sid', 
   secret: process.env.SESSION_SECRET,
   resave: true,
   saveUninitialized: true,
+  store: store,
   cookie: { secure: false }
 }));
 
 // Enable middlewares for authentication
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Enable middleware for logging of connected users
+io.use(
+  passportSocketIo.authorize({
+    cookieParser: cookieParser,
+    key: 'express.sid',
+    secret: process.env.SESSION_SECRET,
+    store: store,
+    success: onAuthorizeSuccess,
+    fail: onAuthorizeFail
+  })
+);
 
 // Connect app with database
 myDB(async (client) => {
@@ -73,7 +94,7 @@ myDB(async (client) => {
     ++currentUsers;
     // Emit the event
     io.emit('user count', currentUsers);
-    console.log('A user has connected');
+    console.log('user ' + socket.request.user.name + ' connected');
     // Add listener for disconnections
     socket.on('disconnect', () => {
       // Decrement users
@@ -88,6 +109,19 @@ myDB(async (client) => {
     res.render('pug', { title: e, message: 'Unable to login' });
   });
 });
+
+// Define the success, and fail callback functions
+function onAuthorizeSuccess(data, accept) {
+  console.log('successful connection to socket.io');
+
+  accept(null, true);
+}
+
+function onAuthorizeFail(data, message, error, accept) {
+  if (error) throw new Error(message);
+  console.log('failed connection to socket.io:', message);
+  accept(null, false);
+}
 
 http.listen(process.env.PORT || 3000, () => {
   console.log('Listening on port ' + process.env.PORT);
