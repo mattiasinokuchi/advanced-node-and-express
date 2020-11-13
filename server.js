@@ -99,6 +99,13 @@ myDB(async (client) => {
       connected: true
     });
     console.log('user ' + socket.request.user.name + ' connected');
+    // Add listener for chat messages
+    socket.on('chat message', (message) => {
+      io.emit('chat message', {
+        name: socket.request.user.name,
+        message
+      });
+    });
     // Add listener for disconnections
     socket.on('disconnect', () => {
       // Decrement users
